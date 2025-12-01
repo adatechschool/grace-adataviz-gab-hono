@@ -9,14 +9,31 @@ async function fetchApi() {
     );
     const apiData = await response.json();
     console.log(apiData);
-    return apiData;
+    return apiData.results;
   } catch (error) {
     console.log(error);
   }
-
-  const listePiscines = document.createElement(ul);
-  listePiscines.id = ''
-  app.appendChild(listePiscines);
 }
 
+async function showData() {
+  const getData = await fetchApi();
+
+  const listePiscines = document.createElement('ul');
+  listePiscines.id = 'liste-piscines'
+  app.appendChild(listePiscines);
+
+  getData.forEach(element => {
+    console.log(element);
+    const piscine = document.createElement('li');
+    piscine.classList = 'piscine';
+    piscine.innerHTML = 
+      `${element.nom}
+      ${element.adresse}
+      ${element.arrondissement}`;
+    listePiscines.appendChild(piscine);
+  });
+  }
+
+
 fetchApi();
+showData();
