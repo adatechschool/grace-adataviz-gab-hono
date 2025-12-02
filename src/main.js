@@ -23,16 +23,88 @@ async function showData() {
   app.appendChild(listePiscines);
 
   getData.forEach(element => {
-    console.log(element);
     const piscine = document.createElement('li');
     piscine.classList = 'piscine';
-    piscine.innerHTML = 
-      `${element.nom}
-      ${element.adresse}
-      ${element.arrondissement}`;
+    piscine.innerHTML = ''
     listePiscines.appendChild(piscine);
+
+      const nomPiscine = document.createElement('p');
+      nomPiscine.classList = 'nom-piscine';
+      nomPiscine.innerHTML = `Piscine : <em>${element.nom}</em>`
+      piscine.appendChild(nomPiscine);
+
+      const adressePiscine = document.createElement('p');
+      adressePiscine.classList = 'adresse-piscine';
+      adressePiscine.innerHTML =
+        `Adresse : ${element.adresse}, ${element.arrondissement}`;
+      piscine.appendChild(adressePiscine);
+
+      const voirPlus = document.createElement('button');
+      voirPlus.classList = 'voir-plus';
+      voirPlus.innerText = 'Voir Plus'
+      piscine.appendChild(voirPlus);
+
+      voirPlus.addEventListener('click', () => {
+
+        voirPlus.classList = 'hidden';
+
+        const details = document.createElement('div');
+        details.classList = 'details';
+        piscine.appendChild(details);
+
+        const horairesBlock = document.createElement('div');
+        horairesBlock.classList = 'horaires-block';
+        details.appendChild(horairesBlock);
+
+        const horairesBtn = document.createElement('button');
+        horairesBtn.id = 'horairesBtn';
+        horairesBtn.innerText = "Horaires";
+        horairesBlock.appendChild(horairesBtn);
+
+        const horairesContent = document.createElement('div');
+        horairesContent.id = 'horairesContent';
+        horairesContent.classList = "dropdown-content hidden";
+        horairesContent.innerHTML = `
+          <ul>
+            <li>Lundi : ${element.horaires_lundi}</li>
+            <li>Mardi : ${element.horaires_mardi}</li>
+            <li>Mercredi : ${element.horaires_mercredi}</li>
+            <li>Jeudi : ${element.horaires_jeudi}</li>
+            <li>Vendredi : ${element.horaires_vendredi}</li>
+            <li>Samedi : ${element.horaires_samedi}</li>
+            <li>Dimanche : ${element.horaires_dimanche}</li>
+          </ul>
+        `;
+        horairesBlock.appendChild(horairesContent);
+
+        horairesBtn.addEventListener("click", () => {
+          horairesContent.classList.toggle("hidden");
+        });
+
+        const autres = document.createElement("ul");
+        autres.classList = "autres-details";
+        autres.innerHTML = `
+          <li>Type de bassin : Non renseigné</li>
+          <li>Petit bassin : Non renseigné</li>
+          <li>Tarifs : Non renseigné</li>
+          <li>Vestiaires : Non renseigné</li>
+          <li>PMR : Non renseigné</li>
+        `;
+        details.appendChild(autres);
+
+
+        const voirMoins = document.createElement('button');
+        voirMoins.classList = 'voir-moins';
+        voirMoins.innerText = "Voir Moins";
+        voirMoins.addEventListener("click", () => {
+          details.remove();
+          voirPlus.classList = 'in-block';
+        });
+        details.appendChild(voirMoins);
+      });
+
   });
-  }
+  };
 
 
 fetchApi();
