@@ -1,6 +1,9 @@
 import './style.css'
 
-const app = document.getElementById("app");
+const app = document.getElementById('app');
+const searchBtn = document.getElementById('searchBtn');
+const searchInput = document.getElementById('searchInput');
+const retourBtn = document.getElementById('retourBtn');
 
 async function fetchApi() {
   try {
@@ -12,17 +15,22 @@ async function fetchApi() {
     return apiData.results;
   } catch (error) {
     console.log(error);
-  }
+  };
+};
+
+function clearList() {
+  const existing = document.getElementById('liste-piscines');
+  if (existing) existing.remove();
 }
 
-async function showData() {
-  const getData = await fetchApi();
+function boucles(boucle) {
+  clearList();
 
   const listePiscines = document.createElement('ul');
-  listePiscines.id = 'liste-piscines'
+  listePiscines.id = 'liste-piscines';
   app.appendChild(listePiscines);
 
-  getData.forEach(element => {
+  boucle.forEach(element => {
     const piscine = document.createElement('li');
     piscine.classList = 'piscine';
     piscine.innerHTML = ''
@@ -102,10 +110,44 @@ async function showData() {
         });
         details.appendChild(voirMoins);
       });
-
   });
-  };
+};
 
+async function showData() {
+
+  const getData = await fetchApi();
+
+  boucles(getData);
+
+  searchBtn.addEventListener('click', (e) => {
+
+    retourBtn.style.display = 'block';
+
+    const searchTerm = searchInput.value.trim().toLowerCase();
+
+    if (!searchTerm) {
+    boucles(getData);
+    return;
+    }
+
+    const filtered = getData.filter (element => {
+      const nom = (element.nom || '').trim().toString().toLowerCase();
+      const adresse = (element.adresse || '').trim().toString().toLowerCase();
+      const arrondissement = (element.arrondissement || '').trim().toString().toLowerCase();
+      return nom.includes(searchTerm) || adresse.includes(searchTerm) || arrondissement.includes(searchTerm);
+    });
+
+    if (filtered.length > 0) {
+      boucles(filtered);
+    }
+  });
+
+  retourBtn.addEventListener('click', (e) => {
+    retourBtn.style.display = 'hidden';
+    searchInput.innerText=''
+    boucles(getData);
+  })
+};
 
 fetchApi();
 showData();
