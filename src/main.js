@@ -37,7 +37,7 @@ function boucles(boucle) {
 
     const nomPiscine = document.createElement('p');
     nomPiscine.classList = 'nom-piscine';
-    nomPiscine.innerHTML = `Piscine : <em>${element.nom}</em>`;
+    nomPiscine.innerHTML = `<strong>${element.nom}</strong>`;
     piscine.appendChild(nomPiscine);
 
     const adressePiscine = document.createElement('p');
@@ -115,7 +115,25 @@ async function showData() {
   const getData = await fetchApi();
   boucles(getData);
 
-  searchBtn.addEventListener('click', () => {
+  searchInput.addEventListener('input', e => {
+    const inputValue = searchInput.value.toLowerCase();
+    const listItems = document.querySelectorAll('.piscine');
+
+    getData.forEach((element, i) => {
+      const nom = (element.nom || '').toLowerCase();
+      const adresse = (element.adresse || '').toLowerCase();
+      const arrondissement = (element.arrondissement || '').toLowerCase();
+
+      const isVisible =
+        nom.includes(inputValue) ||
+        adresse.includes(inputValue) ||
+        arrondissement. includes (inputValue);
+      
+      listItems[i].classList.toggle('hidden', !isVisible);
+    });
+  });
+
+/*   searchBtn.addEventListener('click', () => {
 
     retourBtn.style.display = 'block';
 
@@ -140,7 +158,7 @@ async function showData() {
     retourBtn.style.display = 'none';
     searchInput.value = '';
     boucles(getData);
-  });
+  }); */
 };
 
 showData();
