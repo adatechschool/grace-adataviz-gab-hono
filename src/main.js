@@ -21,26 +21,34 @@ function clearList() {
   const existing = document.getElementById('liste-piscines');
   if (existing) existing.remove();
 }
+  function imageFromName(nom) {
+  return "/images/" + nom + ".jpg";
+}
 
 function boucles(boucle) {
   clearList();
 
-  const listePiscines = document.createElement('ul');
-  listePiscines.id = 'liste-piscines';
+  const listePiscines = document.createElement('div');
+  listePiscines.id = 'container-piscines';
   app.appendChild(listePiscines);
 
   boucle.forEach(element => {
 
-    const piscine = document.createElement('li');
-    piscine.classList = 'piscine';
+    const piscine = document.createElement('div');
+    piscine.classList = 'piscine-card';
     listePiscines.appendChild(piscine);
 
-    const nomPiscine = document.createElement('p');
-    nomPiscine.classList = 'nom-piscine';
+    const img = document.createElement('img');
+    img.src = imageFromName(element.nom);
+    img.classList = 'piscine-banner';
+    piscine.appendChild(img);
+
+    const nomPiscine = document.createElement('h2');
+    nomPiscine.id = 'nom-piscine';
     nomPiscine.innerHTML = `<strong>${element.nom}</strong>`;
     piscine.appendChild(nomPiscine);
 
-    const adressePiscine = document.createElement('p');
+    const adressePiscine = document.createElement('address');
     adressePiscine.classList = 'adresse-piscine';
     adressePiscine.innerHTML = `Adresse : ${element.adresse}, ${element.arrondissement}`;
     piscine.appendChild(adressePiscine);
@@ -115,9 +123,11 @@ async function showData() {
   const getData = await fetchApi();
   boucles(getData);
 
+  console.log(getData);
+
   searchInput.addEventListener('input', e => {
     const inputValue = searchInput.value.toLowerCase();
-    const listItems = document.querySelectorAll('.piscine');
+    const listItems = document.querySelectorAll('.piscine-card');
 
     getData.forEach((element, i) => {
       const nom = (element.nom || '').toLowerCase();

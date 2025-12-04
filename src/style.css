@@ -74,7 +74,7 @@ main {
   justify-content: center;
 }
 
-#liste-piscines {
+#container-piscines {
   padding: 0;
   list-style: none;
   width: 100%;
@@ -84,7 +84,7 @@ main {
   gap: 20px;
 }
 
-.piscine {
+.piscine-card {
   background: var(--bleu-palido);
   border: 3px solid var(--bleu-main);
   border-radius: 18px;
