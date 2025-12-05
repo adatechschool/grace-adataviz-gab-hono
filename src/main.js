@@ -5,6 +5,37 @@ const searchBtn = document.getElementById('searchBtn');
 const searchInput = document.getElementById('searchInput');
 const retourBtn = document.getElementById('retourBtn');
 
+const modeSelector = document.getElementById("mode-selector");
+const retour = document.getElementById("retour");
+const mapDiv = document.getElementById("map");
+
+document.getElementById("btnListe").addEventListener("click", () => {
+  modeSelector.style.display = "none";
+  retour.classList.remove("hidden");
+
+  searchInput.style.display = "block";
+  app.style.display = "block";
+  mapDiv.style.display = "none";
+});
+
+document.getElementById("btnCarte").addEventListener("click", () => {
+  modeSelector.style.display = "none";
+  retour.classList.remove("hidden");
+
+  searchInput.style.display = "block";
+  app.style.display = "none";
+  mapDiv.style.display = "block";
+});
+
+retour.addEventListener("click", () => {
+  modeSelector.style.display = "flex";
+  retour.classList.add("hidden");
+
+  searchInput.style.display = "none";
+  app.style.display = "none";
+  mapDiv.style.display = "none";
+});
+
 async function fetchApi() {
   try {
     const response = await fetch(
@@ -21,7 +52,11 @@ function clearList() {
   const existing = document.getElementById('liste-piscines');
   if (existing) existing.remove();
 }
+
   function imageFromName(nom) {
+    if (nom === "Piscine Saint-Merri / Marie-Marvingt") {
+    return "/images/piscine-saint-merri-marie-marvingt.jpg";
+    }
   return "/images/" + nom + ".jpg";
 }
 
@@ -38,8 +73,19 @@ function boucles(boucle) {
     piscine.classList = 'piscine-card';
     listePiscines.appendChild(piscine);
 
+    const favBtn = document.createElement('button');
+    favBtn.innerHTML = "💙";
+    favBtn.classList = "fav-btn";
+
+    favBtn.addEventListener("click", () => {
+        favBtn.classList.toggle("active");
+      });
+
+    piscine.appendChild(favBtn);
+
     const img = document.createElement('img');
     img.src = imageFromName(element.nom);
+    img.alt = `${element.nom}`
     img.classList = 'piscine-banner';
     piscine.appendChild(img);
 
@@ -79,13 +125,13 @@ function boucles(boucle) {
       horairesContent.classList.add("dropdown-content", "hidden");
       horairesContent.innerHTML = `
         <ul>
-          <li>Lundi : ${element.horaires_lundi}</li>
-          <li>Mardi : ${element.horaires_mardi}</li>
-          <li>Mercredi : ${element.horaires_mercredi}</li>
-          <li>Jeudi : ${element.horaires_jeudi}</li>
-          <li>Vendredi : ${element.horaires_vendredi}</li>
-          <li>Samedi : ${element.horaires_samedi}</li>
-          <li>Dimanche : ${element.horaires_dimanche}</li>
+          <li><strong>Lundi :</strong> ${element.horaires_lundi}</li>
+          <li><strong>Mardi :</strong> ${element.horaires_mardi}</li>
+          <li><strong>Mercredi :</strong> ${element.horaires_mercredi}</li>
+          <li><strong>Jeudi :</strong> ${element.horaires_jeudi}</li>
+          <li><strong>Vendredi :</strong> ${element.horaires_vendredi}</li>
+          <li><strong>Samedi :</strong> ${element.horaires_samedi}</li>
+          <li><strong>Dimanche :</strong> ${element.horaires_dimanche}</li>
         </ul>
       `;
       horairesBlock.appendChild(horairesContent);
@@ -101,7 +147,7 @@ function boucles(boucle) {
         <li>Petit bassin : Non renseigné</li>
         <li>Tarifs : Non renseigné</li>
         <li>Vestiaires : Non renseigné</li>
-        <li>PMR : Non renseigné</li>
+        <li>Accès PMR : Non renseigné</li>
       `;
       details.appendChild(autres);
 
@@ -120,14 +166,46 @@ function boucles(boucle) {
 };
 
 async function showData() {
+
+  document.getElementById("map").style.display = "none";
+  app.style.display = "none";
+  searchInput.style.display = "none";
+
+  const loader = document.getElementById('loader');
+  loader.style.display = "block";
+
   const getData = await fetchApi();
+
+  loader.style.display = "none";
+
   boucles(getData);
 
-  console.log(getData);
+  const map = L.map('map').setView([48.8566, 2.3522], 12);
+
+  const markers = [];
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  getData.forEach(piscine => {
+    if (piscine.geo_point_2d && piscine.geo_point_2d.lat) {
+      const marker = L.marker([piscine.geo_point_2d.lat, piscine.geo_point_2d.lon])
+        .addTo(map)
+        .bindPopup(`<strong>${piscine.nom}</strong><br>${piscine.adresse}`);
+
+      markers.push({
+        marker,
+        data: piscine
+      });
+    }
+  });
 
   searchInput.addEventListener('input', e => {
     const inputValue = searchInput.value.toLowerCase();
     const listItems = document.querySelectorAll('.piscine-card');
+
+    let visibleCount = 0;
 
     getData.forEach((element, i) => {
       const nom = (element.nom || '').toLowerCase();
@@ -141,34 +219,27 @@ async function showData() {
       
       listItems[i].classList.toggle('hidden', !isVisible);
     });
-  });
 
-/*   searchBtn.addEventListener('click', () => {
+    const noResults = document.getElementById('noResults');
+    noResults.classList.toggle('hidden', visibleCount !== 0);
 
-    retourBtn.style.display = 'block';
+    markers.forEach(obj => {
+    const nom = obj.data.nom.toLowerCase();
+    const adresse = obj.data.adresse.toLowerCase();
+    const arrondissement = obj.data.arrondissement.toLowerCase();
 
-    const searchTerm = searchInput.value.trim().toLowerCase();
+    const isVisible =
+      nom.includes(inputValue) ||
+      adresse.includes(inputValue) ||
+      arrondissement.includes(inputValue);
 
-    if (!searchTerm) {
-      boucles(getData);
-      return;
+    if (isVisible) {
+      obj.marker.addTo(map);
+    } else {
+      map.removeLayer(obj.marker);
     }
-
-    const filtered = getData.filter(element => {
-      const nom = (element.nom || '').toLowerCase();
-      const adresse = (element.adresse || '').toLowerCase();
-      const arrondissement = (element.arrondissement || '').toLowerCase();
-      return nom.includes(searchTerm) || adresse.includes(searchTerm) || arrondissement.includes(searchTerm);
-    });
-
-    boucles(filtered);
   });
-
-  retourBtn.addEventListener('click', () => {
-    retourBtn.style.display = 'none';
-    searchInput.value = '';
-    boucles(getData);
-  }); */
+  });
 };
 
 showData();

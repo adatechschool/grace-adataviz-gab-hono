@@ -5,18 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Piscines de Paris</title>
     <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   </head>
   <body>
     <header>
       <h1>Piscines de Paris</h1>
       <div id="search-bar">
       <input id="searchInput" type="text" placeholder="Recherche par nom, adresse ou arrondissement" />
-<!--       <button id="searchBtn">Rechercher</button>
-      <button id="retourBtn" hidden>Retour à l'accueil</button> -->
+      <button id="retour" class="hidden retour-btn">← Retour à l’accueil</button>
       </div>
     </header>
     <main>
+      <div id="mode-selector">
+        <button id="btnListe" class="big-btn">Liste de Piscines</button>
+        <button id="btnCarte" class="big-btn">Carte des Piscines</button>
+      </div>
+      <div id="map"></div>
+      <div id="loader" class="loader"></div>
       <div id="app"></div>
+      <p id="noResults" class="hidden">Aucune piscine ne correspond au critère de recherche.</p>
       <script type="module" src="/src/main.js"></script>
     </main>
   </body>

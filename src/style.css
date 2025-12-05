@@ -9,112 +9,160 @@
   --bleu-brume: #ADE8F4;
   --bleu-opale: #CAF0F8;
 
+  --text-dark: #1a1a1a;
+  --text-light: #ffffff;
+
+  --card-bg: #ffffff;
+  --card-border: #416a8a;
+  --page-bg: #F7FBFE;
+  --separator: #e4eef6;
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.4;
-  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
 }
+
+body.sombre {
+  --page-bg: #0b1a2b;
+  --card-bg: #10273d;
+  --text-dark: #e9f1f7;
+  --separator: #264663;
+  --card-border: #416a8a;
+}
+
 
 body {
   margin: 0;
-  padding: 0;
-  background: var(--bleu-opale);
+  background: var(--page-bg);
+  color: var(--text-dark);
 }
 
+
 header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   width: 100%;
-  background: linear-gradient(135deg, var(--bleu-light), var(--bleu-medium));
-  color: var(--bleu-brume);
-  padding: 20px 0;
+  background: linear-gradient(135deg, var(--bleu-light), var(--bleu-main));
+  color: var(--text-light);
+  padding: 18px 0;
   text-align: center;
-  box-shadow: 0 4px 8px var(--bleu-fonce);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
 }
 
 header h1 {
   margin: 0;
-  font-size: 2rem;
-  letter-spacing: 1px;
+  font-size: 1.8rem;
 }
+
 
 #search-bar {
   margin-top: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding: 0 20px;
 }
 
 #search-bar input {
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: 12px;
   border: 2px solid var(--bleu-main);
-  background: var(--bleu-palido);
+  background: var(--bleu-opale);
   font-size: 1rem;
   outline: none;
 }
 
-#search-bar button {
-  padding: 10px;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  cursor: pointer;
-  background: var(--bleu-soft);
-  color: var(--bleu-opale);
-  box-shadow: 0 2px 5px var(--bleu-medium);
-  transition: 0.2s;
-}
+@media (min-width: 900px) {
+  #search-bar {
+    flex-direction: row;
+    justify-content: center;
+  }
 
-#search-bar button:hover {
-  background: var(--bleu-main);
-}
-
-main {
-  padding: 20px;
-  display: flex;
-  justify-content: center;
+  #search-bar input {
+    width: 420px;
+    font-size: 1.1rem;
+  }
 }
 
 #container-piscines {
-  padding: 0;
-  list-style: none;
   width: 100%;
-  max-width: 900px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  max-width: 1400px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  padding: 0 15px;
 }
+
+@media (min-width: 620px) {
+  #container-piscines {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  #container-piscines {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1400px) {
+  #container-piscines {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 
 .piscine-card {
-  background: var(--bleu-palido);
-  border: 3px solid var(--bleu-main);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
   border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 3px 8px var(--bleu-fonce);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  font-size: 1rem;
-
-  /* efecto “crayon” */
-  border-style: solid;
-  border-width: 3px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .2s;
+  position: relative;
 }
 
-.piscine:hover {
+.piscine-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 14px var(--bleu-fonce);
 }
+
+
+.piscine-banner {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  object-position: center;
+  border-bottom: 1px solid var(--separator);
+}
+
+
+#nom-piscine {
+  margin: 12px;
+  font-size: 1.2rem;
+}
+
+.adresse-piscine {
+  margin: 0 12px 10px 12px;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
 
 .voir-plus,
 .voir-moins,
 .horairesBtn {
-  margin-top: 12px;
+  margin: 12px auto;
   padding: 8px 12px;
   border-radius: 12px;
   border: 2px solid var(--bleu-main);
   background: var(--bleu-light);
-  color: var(--bleu-opale);
+  color: var(--text-light);
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 2px 5px var(--bleu-medium);
+  display: block;
   transition: 0.2s;
 }
 
@@ -124,39 +172,112 @@ main {
   background: var(--bleu-main);
 }
 
-.voir-moins {
-  background: var(--bleu-pastel);
+.details {
+  background: var(--bleu-opale);
+  padding: 12px;
+  border-radius: 12px;
+  margin: 10px;
 }
 
-.details {
-  margin-top: 12px;
-  background: var(--bleu-brume);
-  padding: 12px;
-  border-radius: 14px;
-  border: 2px dashed var(--bleu-soft);
+.dropdown-content ul li {
+  font-weight: 700;
+  color: var(--bleu-fonce);
 }
+
 
 .dropdown-content {
-  margin-top: 10px;
+  margin-top: 8px;
   padding: 10px;
-  background: var(--bleu-opale);
-  border-radius: 10px;
-  border: 1px solid var(--bleu-light);
+  background: var(--bleu-brume);
+  border-radius: 8px;
 }
 
 .hidden {
   display: none !important;
 }
 
-@media (min-width: 768px) {
-  #liste-piscines {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 25px;
-  }
+.loader {
+  width: 60px;
+  height: 60px;
+  margin: 40px auto;
+  border: 6px solid var(--bleu-opale);
+  border-top: 6px solid var(--bleu-main);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
 
-  #search-bar {
-    flex-direction: row;
-    justify-content: center;
-  }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#noResults {
+  text-align: center;
+  margin-top: 20px;
+  color: var(--bleu-medium);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.fav-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 26px;
+  color: #ffffffcc;
+  transition: 0.2s ease;
+}
+
+.fav-btn.active {
+  color: black;
+}
+
+#map {
+  width: 100%;
+  height: 400px;
+  margin-top: 20px;
+  border-radius: 12px;
+  border: 2px solid var(--bleu-main);
+}
+
+#mode-selector {
+  margin: 40px auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.big-btn {
+  width: 90%;
+  max-width: 280px;
+  padding: 14px 18px;
+  background: var(--bleu-main);
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.big-btn:hover {
+  background: var(--bleu-medium);
+}
+
+.retour-btn {
+  margin: 10px auto 0;
+  padding: 8px 14px;
+  background: var(--bleu-pastel);
+  color: var(--bleu-fonce);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  display: block;
+  width: fit-content;
 }
