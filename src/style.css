@@ -180,8 +180,9 @@ header h1 {
 }
 
 .dropdown-content ul li {
-  font-weight: 700;
+  font-weight: 500;
   color: var(--bleu-fonce);
+  list-style: none;
 }
 
 

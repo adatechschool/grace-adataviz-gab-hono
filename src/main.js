@@ -1,40 +1,20 @@
 import './style.css'
 
 const app = document.getElementById('app');
-const searchBtn = document.getElementById('searchBtn');
 const searchInput = document.getElementById('searchInput');
-const retourBtn = document.getElementById('retourBtn');
 
 const modeSelector = document.getElementById("mode-selector");
 const retour = document.getElementById("retour");
 const mapDiv = document.getElementById("map");
+const btnListe = document.getElementById("btnListe");
+const btnCarte = document.getElementById("btnCarte");
 
-document.getElementById("btnListe").addEventListener("click", () => {
-  modeSelector.style.display = "none";
-  retour.classList.remove("hidden");
-
-  searchInput.style.display = "block";
-  app.style.display = "block";
-  mapDiv.style.display = "none";
-});
-
-document.getElementById("btnCarte").addEventListener("click", () => {
-  modeSelector.style.display = "none";
-  retour.classList.remove("hidden");
-
-  searchInput.style.display = "block";
-  app.style.display = "none";
-  mapDiv.style.display = "block";
-});
-
-retour.addEventListener("click", () => {
-  modeSelector.style.display = "flex";
-  retour.classList.add("hidden");
-
-  searchInput.style.display = "none";
-  app.style.display = "none";
-  mapDiv.style.display = "none";
-});
+let getDataGlobal = null;
+let map = null;
+let markers = [];
+let searchListenerAttached = false;
+let mapInitialized = false;
+let pendingInitMap = false;
 
 async function fetchApi() {
   try {
@@ -45,18 +25,19 @@ async function fetchApi() {
     return apiData.results;
   } catch (error) {
     console.log(error);
+    return [];
   }
 };
 
 function clearList() {
-  const existing = document.getElementById('liste-piscines');
+  const existing = document.getElementById('container-piscines');
   if (existing) existing.remove();
 }
 
-  function imageFromName(nom) {
-    if (nom === "Piscine Saint-Merri / Marie-Marvingt") {
+function imageFromName(nom) {
+  if (nom === "Piscine Saint-Merri / Marie-Marvingt") {
     return "/images/piscine-saint-merri-marie-marvingt.jpg";
-    }
+  }
   return "/images/" + nom + ".jpg";
 }
 
@@ -68,7 +49,6 @@ function boucles(boucle) {
   app.appendChild(listePiscines);
 
   boucle.forEach(element => {
-
     const piscine = document.createElement('div');
     piscine.classList = 'piscine-card';
     listePiscines.appendChild(piscine);
@@ -78,8 +58,8 @@ function boucles(boucle) {
     favBtn.classList = "fav-btn";
 
     favBtn.addEventListener("click", () => {
-        favBtn.classList.toggle("active");
-      });
+      favBtn.classList.toggle("active");
+    });
 
     piscine.appendChild(favBtn);
 
@@ -105,7 +85,6 @@ function boucles(boucle) {
     piscine.appendChild(voirPlus);
 
     voirPlus.addEventListener('click', () => {
-
       voirPlus.classList.add('hidden');
 
       const details = document.createElement('div');
@@ -165,49 +144,44 @@ function boucles(boucle) {
   });
 };
 
-async function showData() {
 
-  document.getElementById("map").style.display = "none";
-  app.style.display = "none";
-  searchInput.style.display = "none";
+function initMapWithData(data) {
+  if (mapInitialized) return;
+  if (!data || !data.length) {
+    mapInitialized = true;
+    return;
+  }
 
-  const loader = document.getElementById('loader');
-  loader.style.display = "block";
-
-  const getData = await fetchApi();
-
-  loader.style.display = "none";
-
-  boucles(getData);
-
-  const map = L.map('map').setView([48.8566, 2.3522], 12);
-
-  const markers = [];
+  map = L.map('map').setView([48.8566, 2.3522], 12);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
 
-  getData.forEach(piscine => {
+  markers = [];
+  data.forEach(piscine => {
     if (piscine.geo_point_2d && piscine.geo_point_2d.lat) {
       const marker = L.marker([piscine.geo_point_2d.lat, piscine.geo_point_2d.lon])
-        .addTo(map)
         .bindPopup(`<strong>${piscine.nom}</strong><br>${piscine.adresse}`);
-
-      markers.push({
-        marker,
-        data: piscine
-      });
+      marker.addTo(map);
+      markers.push({ marker, data: piscine });
     }
   });
 
-  searchInput.addEventListener('input', e => {
-    const inputValue = searchInput.value.toLowerCase();
+  mapInitialized = true;
+}
+
+function attachSearchListenerOnce() {
+  if (searchListenerAttached) return;
+  searchListenerAttached = true;
+
+  searchInput.addEventListener('input', () => {
+    const inputValue = (searchInput.value || '').toLowerCase().trim();
     const listItems = document.querySelectorAll('.piscine-card');
 
     let visibleCount = 0;
 
-    getData.forEach((element, i) => {
+    getDataGlobal.forEach((element, i) => {
       const nom = (element.nom || '').toLowerCase();
       const adresse = (element.adresse || '').toLowerCase();
       const arrondissement = (element.arrondissement || '').toLowerCase();
@@ -215,31 +189,104 @@ async function showData() {
       const isVisible =
         nom.includes(inputValue) ||
         adresse.includes(inputValue) ||
-        arrondissement. includes (inputValue);
-      
-      listItems[i].classList.toggle('hidden', !isVisible);
+        arrondissement.includes(inputValue);
+
+      if (listItems[i]) {
+        listItems[i].classList.toggle('hidden', !isVisible);
+      }
+      if (isVisible) visibleCount++;
     });
 
     const noResults = document.getElementById('noResults');
-    noResults.classList.toggle('hidden', visibleCount !== 0);
+    if (noResults) {
+      noResults.classList.toggle('hidden', visibleCount !== 0);
+    }
 
-    markers.forEach(obj => {
-    const nom = obj.data.nom.toLowerCase();
-    const adresse = obj.data.adresse.toLowerCase();
-    const arrondissement = obj.data.arrondissement.toLowerCase();
+    if (mapInitialized && markers.length > 0) {
+      markers.forEach(obj => {
+        const nom = (obj.data.nom || '').toLowerCase();
+        const adresse = (obj.data.adresse || '').toLowerCase();
+        const arrondissement = (obj.data.arrondissement || '').toLowerCase();
 
-    const isVisible =
-      nom.includes(inputValue) ||
-      adresse.includes(inputValue) ||
-      arrondissement.includes(inputValue);
+        const isVisible =
+          nom.includes(inputValue) ||
+          adresse.includes(inputValue) ||
+          arrondissement.includes(inputValue);
 
-    if (isVisible) {
-      obj.marker.addTo(map);
-    } else {
-      map.removeLayer(obj.marker);
+        if (isVisible) {
+          if (!map.hasLayer(obj.marker)) obj.marker.addTo(map);
+        } else {
+          if (map.hasLayer(obj.marker)) map.removeLayer(obj.marker);
+        }
+      });
     }
   });
-  });
-};
+}
+
+async function showData() {
+
+  mapDiv.style.display = "none";
+  app.style.display = "none";
+  searchInput.style.display = "none";
+
+  const loader = document.getElementById('loader');
+  if (loader) loader.style.display = "block";
+
+  const getData = await fetchApi();
+  getDataGlobal = getData || [];
+
+  if (loader) loader.style.display = "none";
+
+  boucles(getDataGlobal);
+
+  attachSearchListenerOnce();
+
+  if (pendingInitMap) {
+    initMapWithData(getDataGlobal);
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+  }
+}
+
+
+btnListe.addEventListener("click", () => {
+  modeSelector.style.display = "none";
+  retour.classList.remove("hidden");
+
+  searchInput.style.display = "block";
+  app.style.display = "block";
+  mapDiv.style.display = "none";
+});
+
+btnCarte.addEventListener("click", () => {
+  modeSelector.style.display = "none";
+  retour.classList.remove("hidden");
+
+  searchInput.style.display = "block";
+  app.style.display = "none";
+  mapDiv.style.display = "block";
+
+  if (!getDataGlobal || getDataGlobal.length === 0) {
+    pendingInitMap = true;
+    return;
+  }
+
+  if (mapInitialized) {
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+    return;
+  }
+
+  initMapWithData(getDataGlobal);
+
+  setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+});
+
+retour.addEventListener("click", () => {
+  modeSelector.style.display = "flex";
+  retour.classList.add("hidden");
+
+  searchInput.style.display = "none";
+  app.style.display = "none";
+  mapDiv.style.display = "none";
+});
 
 showData();
