@@ -1,5 +1,7 @@
 import './style.css'
 
+//VARIABLES INICIALES Y RECUPERACIÓN DE ELEMENTOS HTML
+
 const app = document.getElementById('app');
 const searchInput = document.getElementById('searchInput');
 
@@ -9,6 +11,7 @@ const mapDiv = document.getElementById("map");
 const btnListe = document.getElementById("btnListe");
 const btnCarte = document.getElementById("btnCarte");
 
+//VARIABLES GLOBALES
 let getDataGlobal = null;
 let map = null;
 let markers = [];
@@ -16,6 +19,7 @@ let searchListenerAttached = false;
 let mapInitialized = false;
 let pendingInitMap = false;
 
+//RÉCUPERATION DES DONNÉES
 async function fetchApi() {
   try {
     const response = await fetch(
@@ -29,11 +33,13 @@ async function fetchApi() {
   }
 };
 
+//EFFACER LA LISTE - EVITA DUPLICADOS EN EJECUCIÓN
 function clearList() {
   const existing = document.getElementById('container-piscines');
   if (existing) existing.remove();
 }
 
+//SELECCIÓN DINÁMICA DE IMGs
 function imageFromName(nom) {
   if (nom === "Piscine Saint-Merri / Marie-Marvingt") {
     return "/images/piscine-saint-merri-marie-marvingt.jpg";
@@ -41,14 +47,108 @@ function imageFromName(nom) {
   return "/images/" + nom + ".jpg";
 }
 
-function boucles(boucle) {
+//CREATION DE LA CARTE + MARQUEURS
+function initMapWithData(data) {
+  if (mapInitialized) return;
+  if (!data || !data.length) {
+    mapInitialized = true;
+    return;
+  }
+
+  map = L.map('map').setView([48.8566, 2.3522], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  markers = [];
+  data.forEach(piscine => {
+    if (piscine.geo_point_2d && piscine.geo_point_2d.lat) {
+      const marker = L.marker([piscine.geo_point_2d.lat, piscine.geo_point_2d.lon])
+        .bindPopup(`<strong>${piscine.nom}</strong><br>${piscine.adresse}`);
+      marker.addTo(map);
+      markers.push({ marker, data: piscine });
+    }
+  });
+
+  mapInitialized = true;
+}
+
+//FILTRO
+function attachSearchListenerOnce() {
+  if (searchListenerAttached) return;
+  searchListenerAttached = true;
+
+  searchInput.addEventListener('input', () => {
+    const inputValue = (searchInput.value || '').toLowerCase().trim();
+    const listItems = document.querySelectorAll('.piscine-card');
+
+    let visibleCount = 0;
+
+    getDataGlobal.forEach((element, i) => {
+      const nom = (element.nom || '').toLowerCase();
+      const adresse = (element.adresse || '').toLowerCase();
+      const arrondissement = (element.arrondissement || '').toLowerCase();
+
+      const isVisible =
+        nom.includes(inputValue) ||
+        adresse.includes(inputValue) ||
+        arrondissement.includes(inputValue);
+
+      if (listItems[i]) {
+        listItems[i].classList.toggle('hidden', !isVisible);
+      }
+      if (isVisible) visibleCount++;
+    });
+
+    const noResults = document.getElementById('noResults');
+    if (noResults) {
+      noResults.classList.toggle('hidden', visibleCount !== 0);
+    }
+
+    if (mapInitialized && markers.length > 0) {
+      markers.forEach(obj => {
+        const nom = (obj.data.nom || '').toLowerCase();
+        const adresse = (obj.data.adresse || '').toLowerCase();
+        const arrondissement = (obj.data.arrondissement || '').toLowerCase();
+
+        const isVisible =
+          nom.includes(inputValue) ||
+          adresse.includes(inputValue) ||
+          arrondissement.includes(inputValue);
+
+        if (isVisible) {
+          if (!map.hasLayer(obj.marker)) obj.marker.addTo(map);
+        } else {
+          if (map.hasLayer(obj.marker)) map.removeLayer(obj.marker);
+        }
+      });
+    }
+  });
+}
+
+//OBTENTION DES DONNÉES ET AFFICHAGE EN LISTE
+async function showData() {
+
+  mapDiv.style.display = "none";
+  app.style.display = "none";
+  searchInput.style.display = "none";
+
+  const loader = document.getElementById('loader');
+  if (loader) loader.style.display = "block";
+
+  const getData = await fetchApi();
+  getDataGlobal = getData || [];
+
+  if (loader) loader.style.display = "none";
+
   clearList();
 
   const listePiscines = document.createElement('div');
   listePiscines.id = 'container-piscines';
   app.appendChild(listePiscines);
 
-  boucle.forEach(element => {
+  getDataGlobal.forEach(element => {
     const piscine = document.createElement('div');
     piscine.classList = 'piscine-card';
     listePiscines.appendChild(piscine);
@@ -148,112 +248,16 @@ function boucles(boucle) {
       details.appendChild(voirMoins);
     });
   });
-};
-
-
-function initMapWithData(data) {
-  if (mapInitialized) return;
-  if (!data || !data.length) {
-    mapInitialized = true;
-    return;
-  }
-
-  map = L.map('map').setView([48.8566, 2.3522], 12);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
-
-  markers = [];
-  data.forEach(piscine => {
-    if (piscine.geo_point_2d && piscine.geo_point_2d.lat) {
-      const marker = L.marker([piscine.geo_point_2d.lat, piscine.geo_point_2d.lon])
-        .bindPopup(`<strong>${piscine.nom}</strong><br>${piscine.adresse}`);
-      marker.addTo(map);
-      markers.push({ marker, data: piscine });
-    }
-  });
-
-  mapInitialized = true;
-}
-
-function attachSearchListenerOnce() {
-  if (searchListenerAttached) return;
-  searchListenerAttached = true;
-
-  searchInput.addEventListener('input', () => {
-    const inputValue = (searchInput.value || '').toLowerCase().trim();
-    const listItems = document.querySelectorAll('.piscine-card');
-
-    let visibleCount = 0;
-
-    getDataGlobal.forEach((element, i) => {
-      const nom = (element.nom || '').toLowerCase();
-      const adresse = (element.adresse || '').toLowerCase();
-      const arrondissement = (element.arrondissement || '').toLowerCase();
-
-      const isVisible =
-        nom.includes(inputValue) ||
-        adresse.includes(inputValue) ||
-        arrondissement.includes(inputValue);
-
-      if (listItems[i]) {
-        listItems[i].classList.toggle('hidden', !isVisible);
-      }
-      if (isVisible) visibleCount++;
-    });
-
-    const noResults = document.getElementById('noResults');
-    if (noResults) {
-      noResults.classList.toggle('hidden', visibleCount !== 0);
-    }
-
-    if (mapInitialized && markers.length > 0) {
-      markers.forEach(obj => {
-        const nom = (obj.data.nom || '').toLowerCase();
-        const adresse = (obj.data.adresse || '').toLowerCase();
-        const arrondissement = (obj.data.arrondissement || '').toLowerCase();
-
-        const isVisible =
-          nom.includes(inputValue) ||
-          adresse.includes(inputValue) ||
-          arrondissement.includes(inputValue);
-
-        if (isVisible) {
-          if (!map.hasLayer(obj.marker)) obj.marker.addTo(map);
-        } else {
-          if (map.hasLayer(obj.marker)) map.removeLayer(obj.marker);
-        }
-      });
-    }
-  });
-}
-
-async function showData() {
-
-  mapDiv.style.display = "none";
-  app.style.display = "none";
-  searchInput.style.display = "none";
-
-  const loader = document.getElementById('loader');
-  if (loader) loader.style.display = "block";
-
-  const getData = await fetchApi();
-  getDataGlobal = getData || [];
-
-  if (loader) loader.style.display = "none";
-
-  boucles(getDataGlobal);
 
   attachSearchListenerOnce();
 
   if (pendingInitMap) {
     initMapWithData(getDataGlobal);
     setTimeout(() => { if (map) map.invalidateSize(); }, 100);
-  }
-}
+  };
+};
 
-
+//BOUTONS DE NAVEGATION
 btnListe.addEventListener("click", () => {
   modeSelector.style.display = "none";
   retour.classList.remove("hidden");
